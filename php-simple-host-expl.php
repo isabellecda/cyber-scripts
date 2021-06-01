@@ -8,13 +8,13 @@
 	<input type="submit" name="btnEnum" value="Auto Enum">
 	<br><br>
 	Reverse:
-	<input type="text" name="lhost" value="192.168.80.177" size="10">
+	<input type="text" name="lhost" value="192.168.10.10" size="10">
 	<input type="text" name="lport" value="1234" size="5">
 	<input type="submit" name="btnBash" value="Reverse Bash">
 	<input type="submit" name="btnPhp" value="Reverse PHP">
 	<br><br>
 	HTTP Server:
-	<input type="text" name="fileHost" value="192.168.80.177" size="10">
+	<input type="text" name="fileHost" value="192.168.10.10" size="10">
 	<input type="text" name="filePort" value="8055" size="5">
 	<input type="text" name="fileName" value="">
 	<input type="submit" name="btnFile" value="Get file">
