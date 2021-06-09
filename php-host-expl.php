@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Simple host exploration script: basic host enumeration using PHP -->
+<!-- Host exploration script: basic host enumeration using PHP -->
 <!-- https://github.com/isabellecda/cyber-scripts -->
 <html>
 	<b>
