@@ -7,3 +7,4 @@ Scripts for automating cyber exploration.
 * php-host-expl.php - Host exploration using PHP. Configures commands based on server OS and enabled functions.
 * php-simple-host-expl.php - Simple host exploration using PHP.
 * smb-check-shares-perms.sh - Checks SMB shares permissions.
+* smb-list-perms.sh - List files permissions in SMB share.
