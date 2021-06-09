@@ -101,6 +101,7 @@
 
 	<br>
 
+	<!-- HTTP file server -->
         <form  method="POST">
 		File download using Remote HTTP Server:
 		<!-- HTTP server must be available at the defined host and port -->
@@ -122,6 +123,8 @@
 	</form>
 
 	<br>
+
+	<!-- Neo-reGeorg -->
 	*<a href="https://github.com/L-codes/Neo-reGeorg" target="_blank"> Neo-reGeorg</a> tunnel available. Execute the following command on the client side to use it:
 	<br>
 	<small><i>
