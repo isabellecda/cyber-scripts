@@ -14,4 +14,4 @@ Scripts for automating cyber exploration.
 
 ### SMB
 * smb-check-shares-perms.sh - Checks SMB shares permissions.
-* smb-list-perms.sh - List files permissions in SMB share.
+* smb-ckeck-dir-perms.sh - Checks SMB directory permissions in every listed share.
