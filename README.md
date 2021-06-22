@@ -15,3 +15,6 @@ Scripts for automating cyber exploration.
 ### SMB
 * smb-check-shares-perms.sh - Checks SMB shares permissions.
 * smb-ckeck-dir-perms.sh - Checks SMB directory permissions in every listed share.
+
+### Buffer Overflow
+* vanilla_buffer_overflow.py - Help functions for exploting a vanilla buffer overflow vulnerability in a Windows remote binary.
