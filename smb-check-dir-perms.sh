@@ -26,42 +26,43 @@ if [ -z "$pass" ] ; then pass="anon" ; fi
 # smbclient
 smbclient=$(which smbclient)
 
+# Checks read or write permission
+function checkReadWritePerm() {
+	local share="$1"
+	local tdir="$2"
+	local tmpFile="$3"
+
+	if $smbclient "//${host}/${share}/" -U "${user}%${pass}"  -c "cd ${tdir}; put ${tmpFile}; rm ${tmpFile}" >/dev/null 2>&1
+	then
+		echo -en "${RED}WRITE\t"
+		echo -n ": ${share} : ${tdir}"
+		echo -e "${RST}"
+	else
+		echo -en "${YELLOW}READ\t"
+		echo -n ": ${share} : ${tdir}"
+		echo -e "${RST}"
+	fi
+}
+
 shareList=$($smbclient -g -t 2 -L "$host" -U "${user}%${pass}" 2>/dev/null | awk -F'|' '$1 == "Disk" {print $2}')
 
 # Write file
+tmpFile=tmp_$$.tmp
+
 cd "${TMPDIR:-/tmp}"
-touch tmp_$$.tmp  
+touch ${tmpFile}
 
 for share in $shareList
 do
-	if $smbclient "//$host/$share/" -U "${user}%${pass}" -c "lcd" >/dev/null 2>&1
+	if $smbclient "//${host}/${share}/" -U "${user}%${pass}" -c "lcd" >/dev/null 2>&1
 	then
 		# Current dir
-		if $smbclient "//$host/$share/" -U "${user}%${pass}"  -c "put tmp_$$.tmp ; rm tmp_$$.tmp" >/dev/null 2>&1
-		then
-			echo -en "${RED}WRITE\t"
-			echo -n ": ${share} : ."
-			echo -e "${RST}"
-		else
-			echo -en "${YELLOW}READ\t"
-			echo -n ": ${share} : ."
-			echo -e "${RST}"
-		fi
+		checkReadWritePerm "${share}" "." "${tmpFile}"
 
 		# Recursive dir
-		$smbclient "//$host/$share/" -U "${user}%${pass}"  -c "recurse;dir" | egrep ^'\\' 2>/dev/null | 	while IFS= read -r line
+		$smbclient "//${host}/${share}/" -U "${user}%${pass}"  -c "recurse;dir" | egrep ^'\\' 2>/dev/null | 	while IFS= read -r line
 		do
-			if smbclient "//$host/$share/" -U "${user}%${pass}" -c "cd $line; put tmp_$$.tmp ; rm tmp_$$.tmp" >/dev/null 2>&1
-			then
-				echo -en "${RED}WRITE\t"
-				echo -n ": ${share} : ${line}"
-				echo -e "${RST}"
-
-			else
-				echo -en "${YELLOW}READ\t"
-				echo -n ": ${share} : ${line}"
-				echo -e "${RST}"
-			fi
+			checkReadWritePerm "${share}" "${line}" "${tmpFile}"
 		done
 	else
 		echo -en "${GRAY}NONE\t"
@@ -70,6 +71,6 @@ do
 	fi
 done
 
-rm -f tmp_$$.tmp
+rm -f ${tmpFile}
 
 exit
