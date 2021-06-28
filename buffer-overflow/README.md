@@ -2,7 +2,7 @@
 
 ## ig-buffer-overflow.py
 * Help functions for exploting buffer overflow vulnerabilities in a Windows remote binary. 
-* Tested with: Vanilla Buffer Overflow, Structured Exception Handling Overwrite (SEH Overwrite), Egg Hunting
+* Tested with: Vanilla Buffer Overflow, Structured Exception Handling Overwrite (SEH Overwrite), Egg Hunting.
 
 ## Usage
 
