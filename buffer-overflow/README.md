@@ -43,7 +43,7 @@ exploit - Sends malicious payload via buffer overflow
 * [mode] : Script modes: test|cyclic|write|exploit
 * remoteHost : Remote host IP.
 * remotePort : Remote host port.
-* buffSize : Amount of variable bytes to send.
+* buffSize : Amount of bytes to send.
 * buffHead : Static buffer string set at the beginning of the buffer. Is usually the crash string. Size is considered in buffSize calc.
 * offset : Place in buffer where content can be added.
 * hexcontent	: Hex string to add at the offset position. Can be considered as big endian (default) or little endian (will be reversed). Use 'g' or 'l' to delimit the order. Examples:
