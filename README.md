@@ -17,4 +17,4 @@ Scripts for automating cyber exploration.
 * smb-ckeck-dir-perms.sh - Checks SMB directory permissions in every listed share.
 
 ### Buffer Overflow
-* vanilla-buffer-overflow.py - Help functions for exploting a vanilla buffer overflow vulnerability in a Windows remote binary.
+* ig-buffer-overflow.py py - Help functions for exploting a buffer overflow vulnerabilities in a Windows remote binary. Tested with cases: Vanilla Bufer Overflow, Structured Exception Handling Overwrite (SEH Overwrite), Egg Hunting
