@@ -36,7 +36,7 @@ write - Write badchars (before or after offset content) for badchar verification
 exploit - Sends malicious payload via buffer overflow
 ```
 ./ig_buffer_overflow.py exploit remoteHost remotePort buffSize buffHead offset hexcontent reverseJmpSize shellCodeFile [nops]
-./ig_buffer_overflow.py exploit 10.2.31.155 2048 5009 hello 01010101 1203 10 payload
+./ig_buffer_overflow.py exploit 10.2.31.155 2050 4096 'cmd /.:/' 1203 0A62F809 800 payload 2
 ```
 
 ## Parameters:
