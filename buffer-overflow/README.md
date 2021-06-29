@@ -50,7 +50,7 @@ exploit - Sends malicious payload via buffer overflow
 * --badchar	: Adds bad chars before (before) or after (after) the content. Used for bad char testing.
 * --exclude	: List of chars (formatted as hex string) to be excluded from badchar list.
 * --reversejmp	: Size in bytes to jump before the content to inject bad chars or the shell code.
-* --shellcode	: Python shell code file generated using msfvenom. Do NOT include the .py extension in the parameter.
+* --shellcode	: Hex shell code file generated using msfvenom. Do NOT include the .py extension in the parameter.
   * Example: msfvenom -p windows/exec cmd=calc.exe -b '\x00' -f python EXITFUNC=thread -o payload
 * --nops		: Amount of nops to add before and after the shell code. Default is 0.
 
