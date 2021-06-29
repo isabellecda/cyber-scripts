@@ -40,7 +40,7 @@ exploit - Sends malicious payload via buffer overflow
 * --rport		: Remote host port.
 * --buffsize	: Amount of variable bytes to send.
 * --buffhead	: Static buffer string set at the beginning of the buffer.
-  * Is usually the crash string. Size is considered in buffSize calc.
+  * Is usually the crash string. Size is considered in buffsize calc.
 * --offset	: Place in buffer where content can be added.
 * --hexcontent	: Hex string to add at the offset position.
   * Can be considered as big endian (default) or little endian (will be reversed).
