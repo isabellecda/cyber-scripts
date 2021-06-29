@@ -17,4 +17,4 @@ Scripts for automating cyber exploration.
 * smb-ckeck-dir-perms.sh - Checks SMB directory permissions in every listed share.
 
 ### Buffer Overflow
-* Help functions for exploting a buffer overflow vulnerabilities in a Windows remote binary. 
+* Help functions for exploting buffer overflow vulnerabilities in a Windows remote binary. 
