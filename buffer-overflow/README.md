@@ -33,9 +33,9 @@ exploit - Sends malicious payload via buffer overflow
 ```
 
 ## Parameters:
-* -h|--help	: Show script usage.
-* -n|--norec	: Don't wait for receive message after connect.
-* -m|--mode	: Script mode (test|cyclic|write|exploit).
+* --help|-h	: Show script usage.
+* --norec|-n	: Don't wait for receive message after connect.
+* --mode|-m	: Script mode (test|cyclic|write|exploit).
 * --rhost		: Remote host IP.
 * --rport		: Remote host port.
 * --buffsize	: Amount of variable bytes to send.
