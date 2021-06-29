@@ -83,7 +83,7 @@ def create_cyclic_pattern(length = 8192):
 					if parts[0] > 'Z':
 						parts[0] = 'A'
 	
-	print("Cyclic pattern:", pattern) if VERBOSE else None
+	#print("Cyclic pattern:", pattern) if VERBOSE else None
 
 	return pattern
 
@@ -397,10 +397,10 @@ if __name__ == "__main__":
 				print("Error: incorrect number of params for --mode=write, --badchar=before.")
 				sys.exit(1);
 
-			buffPayload = create_badchar_payload_before(buffHead, buffSize, offset, binContent, reverseJmpSize, excludedChars)
+			buffPayload = create_badchar_payload_before(buffHead, buffSize, offset, binContent, reverseJmpSize, badCharExcluded)
 
 		elif badCharOption == 'after':
-			buffPayload = create_badchar_payload_after(buffHead, buffSize, offset, binContent, excludedChars)
+			buffPayload = create_badchar_payload_after(buffHead, buffSize, offset, binContent, badCharExcluded)
 			
 		else:
 			buffPayload = create_write_payload(buffHead, buffSize, offset, binContent)
