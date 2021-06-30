@@ -21,7 +21,7 @@ def print_usage(scriptName):
 	print(" {} -m test --rhost=10.2.31.155 --rport=2050 --buffsize=4096 --buffhead='cmd2 /.:/'".format(scriptName))
 	print("")
 
-	print("cyclic - Sends cyclic string to help identify memory positions")
+	print("cyclic - Sends cyclic pattern to help identify memory positions")
 	print(" {} -m cyclic --rhost=10.2.31.155 --rport=2050 --buffsize=4096 --buffhead='cmd2 /.:/'".format(scriptName))
 	print("")
 
@@ -46,7 +46,7 @@ def print_usage(scriptName):
 	print("")
 	print(" --help|-h	: Show script usage.")
 	print(" --norec|-n	: Don't wait for receive message after connect.")
-	print(" --mode|-m	: Select script mode (test|cyclic|write|exploit).")
+	print(" --mode|-m	: Select script mode (test|cyclic|write|exploit|checkoffset).")
 	print(" --rhost		: Remote host IP.")
 	print(" --rport		: Remote host port.")
 	print(" --buffsize	: Amount of variable bytes to send.")
