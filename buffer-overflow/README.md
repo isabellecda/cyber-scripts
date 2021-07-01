@@ -62,11 +62,12 @@ write - Sends malicious shell code (hex string file) via buffer overflow
     * '01020304' --> will send '01020304'
 * --before|after	: Writes additional content (hex string) before and/or after the offset content.
   * If content is 'badchar', content will be a generated badchar list. Used for bad char testing.
-  * If content is 'shellcode', --shellcode parameter will be expected
+  * If content is 'shellcode', --shellcode parameter will be expected.
+  * Other content will be considered as big endian (default) or little endian (will be reversed). Same as --hexcontent.
 * --exclude	: List of chars (formatted as hex string) to be excluded from badchar list.
 * --shellcode	: Hex shell code file generated using msfvenom. 
   * Example: msfvenom -p windows/exec cmd=calc.exe -b '\x00' -f hex EXITFUNC=thread -o opencalc
-* --nops		: Amount of nops to add before and after the addition write content (be if badchars, shellcode or simple hexstring). Default is 0.
+* --nopsb|nopsa	: Amount of nops to add before and/or after the additional write content (be if badchars, shellcode or simple hexstring). Default is 0.
 * --value		: Offset value.
 * --length	: Cyclic pattern length.
 
