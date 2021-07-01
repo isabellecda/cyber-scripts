@@ -424,7 +424,7 @@ if __name__ == "__main__":
 
 		# Application connection return
 		if not norec:
-			r = s.recv(50000)	
+			r = s.recv(DEFAULT_SOCKET_BUFF_SIZE)	
 			print(r) if VERBOSE else None
 
 		# Interact with the application before sending the payload		
