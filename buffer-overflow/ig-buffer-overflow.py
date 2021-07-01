@@ -340,6 +340,7 @@ if __name__ == "__main__":
 	if not mode:
 		print("Error: script mode must be set.")
 		print_usage(scriptName)
+		sys.exit(1);
 
 	# Checkoffset
 	if mode == "checkoffset" and not patternValue:
