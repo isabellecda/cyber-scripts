@@ -53,7 +53,7 @@ def print_usage(scriptName):
 	print("")
 	print(" --help|-h	: Show script usage.")
 	print(" --norec|-n	: Don't wait for receive message after connect.")
-	print(" --mode|-m	: Select script mode (test|cyclic|write|exploit|checkoffset).")
+	print(" --mode|-m	: Select script mode (test|cyclic|write|checkoffset).")
 	print(" --rhost		: Remote host IP.")
 	print(" --rport		: Remote host port.")
 	print(" --buffsize	: Amount of variable bytes to send.")
@@ -251,7 +251,7 @@ if __name__ == "__main__":
 	scriptName = sys.argv[0]
 
 	# Avaiable modes
-	AVAILABLE_MODES = ["test", "cyclic", "write", "exploit", "checkoffset"]
+	AVAILABLE_MODES = ["test", "cyclic", "write", "checkoffset"]
 
 	# Input parameters
 	try:
