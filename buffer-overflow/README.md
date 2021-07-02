@@ -6,9 +6,7 @@ Scripts for exploiting buffer overflow.
 * ig-buffer-overflow.py - Help functions for exploting buffer overflow vulnerabilities in a Windows remote binary.
 * socket-reuse-ws2_32.recv.py - Example code for exploiting a socket reuse with winsocket dll (WS2_32.recv)
 
-# Scripts
-
-## ig-buffer-overflow.py
+# ig-buffer-overflow.py
 * Help functions for exploting buffer overflow vulnerabilities in a Windows remote binary. 
 * Tested with: Vanilla Buffer Overflow, Structured Exception Handling Overwrite (SEH Overwrite), Egg Hunting.
 
