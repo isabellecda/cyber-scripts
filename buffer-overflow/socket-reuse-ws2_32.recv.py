@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 #
 # Script for buffer overflow socket reuse using WS2_32.recv
+# https://github.com/isabellecda/cyber-scripts
 #
 
 import socket
