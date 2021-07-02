@@ -12,7 +12,7 @@ import sys
 
 SOCKET_BUFF_SIZE = 2048
 
-# Params example from vulnserver KSTET
+# Params example for vulnserver KSTET
 rhost = "10.2.31.146"		# remote host
 rport = 9999			# remote port
 buffsize = 500			# buffer size
