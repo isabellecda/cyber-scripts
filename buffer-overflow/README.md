@@ -76,6 +76,7 @@ write - Sends malicious shell code (hex string file) via buffer overflow
 * --nopsb|nopsa	: Amount of nops to add before and/or after the additional write content (be if badchars, shellcode or simple hexstring). Default is 0.
 * --value		: Offset value.
 * --length	: Cyclic pattern length.
+* --flush		: Adds '\\r\\n' at the end of the payload.
 
 
 ## Vanilla Buffer Overflow example
