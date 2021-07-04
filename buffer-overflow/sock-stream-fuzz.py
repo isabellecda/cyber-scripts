@@ -1,8 +1,6 @@
 #!/usr/bin/python3
 #
-# ig-buffer-overflow.py
-#
-# Isabelle's generic buffer overflow tool
+# sock-stream-fuzz.py
 #
 # https://github.com/isabellecda/cyber-scripts
 #
