@@ -114,7 +114,7 @@ for counter in range(1, MAX_COUNT):
 		# Connect to rhost and rport
 		connect = s.connect((rhost, rport))
 
-		print("Testing payload with size:", buffstep * counter) if VERBOSE else None
+		print("Testing payload with size:", buffstep * counter)
 
 		# Application connection return
 		if not norec:
