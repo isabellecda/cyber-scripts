@@ -441,7 +441,7 @@ if __name__ == "__main__":
 			s.send(interactValue)
 
 			# Application payload return
-			print("Return:")
+			print("Return:") if VERBOSE else None
 			r = s.recv(DEFAULT_SOCKET_BUFF_SIZE)	
 			print(r) if VERBOSE else None
 
