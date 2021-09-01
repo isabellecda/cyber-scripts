@@ -1,8 +1,6 @@
 # Searches shodan for hosts defined by IP blocks in CIDR notation
 # Input is a file with an IP block in each line
-# Example: > cat file.txt
-#   192.168.10.0/24
-#   192.163.12.0/24
+# Example file: ip-range-example.txt
 
 import shodan
 import time
