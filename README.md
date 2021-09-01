@@ -20,5 +20,5 @@ Scripts for automating cyber exploration.
 * Help functions for exploting buffer overflow vulnerabilities in a Windows remote binary. 
 
 ### OSINT
-* shodan-host-search.py - Shodan API example usage. Searches Shodan for hosts defined by IP blocks in CIDR notation (file input)
+* Tools and scripts used for opern source intelligence (OSINT) gathering.
 
